@@ -1,0 +1,103 @@
+#Tenable Create User
+import json, os, yaml, sys
+import datetime as dt
+from tenable.sc import TenableSC
+from scandatafunctions import *
+
+"""
+This script will create Tenable User accounts for all 4 tiers and the test server if you wish.
+
+The main method sets the global variables, reads the configuration file, and then gathers information from the 4 tenable servers (RCO, OFL, BUF, WLC) and processes this information like Scanner names, scan zone area names, IP addresses in the scan zone areas. It then outputs this information in a nice spreadsheet file.
+
+:return: None
+"""
+current_time = make_timestamp()
+print(f"Tenable Create User.py, started at {current_time}!")
+
+global user, rco_sc, ofl_sc
+
+    # Read the configuration file to load exceptions derived from Confluence ITASK Issue Tracker, and API keys.
+#with open("config.yml", 'r') as config:
+#with open("config2.yml", 'r') as config: #this one a YAML file with the OTHER role type with its API key.
+#with open("config4.yml", 'r') as config: #similar to config2.yml but with the new test server API information
+with open("config3.yml", 'r') as config: #Experimental #config3 has the new test server API key,
+    cfg = yaml.load(config, Loader=yaml.FullLoader)
+    user = cfg['TenableSC']['user']
+    rco_access_key = cfg['TenableSC']['rco']['accessKey']
+    rco_secret_key = cfg['TenableSC']['rco']['secretKey']
+    ofl_access_key = cfg['TenableSC']['ofl']['accessKey']
+    ofl_secret_key = cfg['TenableSC']['ofl']['secretKey']
+    buf_access_key = cfg['TenableSC']['buf']['accessKey']
+    buf_secret_key = cfg['TenableSC']['buf']['secretKey']
+    wlc_access_key = cfg['TenableSC']['wlc']['accessKey']
+    wlc_secret_key = cfg['TenableSC']['wlc']['secretKey']
+    tst_access_key = cfg['TenableSC']['tst']['accessKey']
+    tst_secret_key = cfg['TenableSC']['tst']['secretKey']
+
+#If you wish to remove scanning a tier just uncomment it above and below. IT WILL ENSURE IT WILL NEVER TOUCH THAT TIER.
+
+    #Authenticate with Tenable.SC consoles
+rco_sc = TenableSC('cncpxtena1100.centene.com', access_key=rco_access_key, secret_key=rco_secret_key)
+ofl_sc = TenableSC('cncpxtena1200.centene.com', access_key=ofl_access_key, secret_key=ofl_secret_key)
+buf_sc = TenableSC('cncpxtena1300.centene.com', access_key=buf_access_key, secret_key=buf_secret_key)
+wlc_sc = TenableSC('10.140.61.98', access_key=wlc_access_key, secret_key=wlc_secret_key)
+tst_sc = TenableSC('cnctxtena1000.centene.com', access_key=tst_access_key, secret_key=tst_secret_key)
+
+'''
+Variable list:
+rco_sc = token for RCO
+ofl_sc = token for OFL
+buf_sc = token for BUF
+wlc_sc = token for WLC
+tst_sc = token for Test server
+'''
+
+
+#This below works, uncomment the next two lines if you want user information when creating tenable accounts.
+# userlist = get_tenable_sc_user_names_list(tst_sc)
+# print(f"response from get_tenable_sc_user_names_list is {userlist}")
+#end of get user name list
+
+#If you want to create an account in only one account uncomment the next two lines and comment out lines 63-96.
+# userCreationResponse = create_tenable_sc_user(tst_sc) #change the variable argument to another to change the tier example (buf_sc, ofl_sc, wlc_sc, rco_sc, tst_sc)
+# print(f"response from create_tenable_sc_user  {userCreationResponse}")
+
+
+username = input("What is the username that you wish to create?")
+userrole = input("What is the user's role # that you want to assign to this user?")
+password = input("What is the user's password that you want to assign to this user?")
+emailaddress = input("What is the user's email address that you want to assign to this user?")
+
+rcoUserCreateResponse = create_tenable_sc_user2(rco_sc, username, userrole, password, emailaddress)
+oflUserCreateResponse = create_tenable_sc_user2(ofl_sc, username, userrole, password, emailaddress)
+bufUserCreateResponse = create_tenable_sc_user2(buf_sc, username, userrole, password, emailaddress)
+wlcUserCreateResponse = create_tenable_sc_user2(wlc_sc, username, userrole, password, emailaddress)
+
+answer = input("Would you like to create an account in the Test Tenable server as well Yes or No?")
+if answer == "yes":
+    tstUserCreateResponse = create_tenable_sc_user2(tst_sc, username, userrole, password, emailaddress)
+if answer == "YES":
+    tstUserCreateResponse = create_tenable_sc_user2(tst_sc, username, userrole, password, emailaddress)
+if answer == "Yes":
+    tstUserCreateResponse = create_tenable_sc_user2(tst_sc, username, userrole, password, emailaddress)
+if answer == "yES":
+    tstUserCreateResponse = create_tenable_sc_user2(tst_sc, username, userrole, password, emailaddress)
+if answer == "Y":
+    tstUserCreateResponse = create_tenable_sc_user2(tst_sc, username, userrole, password, emailaddress)
+if answer == "y":
+    tstUserCreateResponse = create_tenable_sc_user2(tst_sc, username, userrole, password, emailaddress)
+
+print("Tenable user was created at all four tiers: RCO, OFL, Buffalo, and Welcare, in that order. Here is the responses")
+print(f"Response from Tenable RCO {rcoUserCreateResponse}")
+print(f"Response from Tenable OFL {oflUserCreateResponse}")
+print(f"Response from Tenable Buffalo {bufUserCreateResponse}")
+print(f"Response from Tenable Welcare {wlcUserCreateResponse}")
+
+try:
+    print(f"Response from Tenable Test Server {tstUserCreateResponse}")
+except:
+    print("No test server account was created.")
+
+
+current_time = make_timestamp()
+print(f"\n Program Tenable_create_user.py has ended at {current_time}")
